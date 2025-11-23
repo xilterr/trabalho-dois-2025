@@ -9,12 +9,13 @@ class TelaSistema(TelaAbstract):
         print("=" * 30)
         print("[1] - Gerenciar Participantes")
         print("[2] - Gerenciar Empresas")
-        print("[3] - Gerenciar Países")
-        print("[4] - Gerenciar Cidades")
-        print("[5] - Gerenciar Transportes")
+        print("[3] - Gerenciar Transportes")
+        print("[4] - Gerenciar Países")
+        print("[5] - Gerenciar Cidades")
+        print("[6] - Gerenciar Passeios")
         print("[0] - Sair do Sistema")
         print("=" * 30) 
 
-        opcao = self.le_num_inteiro_positivo("Escolha a opção: ", [1, 2, 3, 4, 5, 0])
+        opcao = self.le_num_inteiro_positivo("Escolha a opção: ", [1, 2, 3, 4, 5, 6, 0])
 
         return opcao

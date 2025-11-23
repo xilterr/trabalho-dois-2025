@@ -11,7 +11,6 @@ class ControladorPais:
     def __init__(self, controlador_sistema):
         self.__tela_pais = TelaPais()
         self.__controlador_sistema = controlador_sistema
-        self.__id_atual = 0
         self.__pais_DAO = PaisDAO()
 
     def gera_id(self):
@@ -113,7 +112,7 @@ class ControladorPais:
             pais_selecionado = self.pega_pais_por_id()
 
             if pais_selecionado:
-                self.__pais_DAO.remove(pais_selecionado)
+                self.__pais_DAO.remove(pais_selecionado.id)
                 self.__tela_pais.mostra_mensagem(f"O país {pais_selecionado.nome}, "
                                                 f"ID #{pais_selecionado.id} foi excluído com sucesso!")
         except OpcaoInvalidaException as e:

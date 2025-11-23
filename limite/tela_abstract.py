@@ -29,3 +29,22 @@ class TelaAbstract(ABC):
                 continue
 
             return inteiro
+
+    def le_num_float_positivo(self, mensagem: str = ''):
+        while True:
+            valor_lido = input(mensagem)
+
+            valor_lido = valor_lido.replace(".", ",")
+
+            try:
+                numero_float = float(valor_lido)
+
+                if numero_float < 0:
+                    print("ERRO: O valor não pode ser negativo.")
+                    continue
+
+                return round(numero_float, 2)
+
+            except ValueError:
+                print("ERRO: Valor incorreto. Digite um número válido (ex: 100.50 ou 100,50).")
+                continue

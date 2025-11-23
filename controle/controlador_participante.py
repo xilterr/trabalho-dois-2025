@@ -10,8 +10,11 @@ class ControladorParticipante:
     def __init__(self, controlador_sistema):
         self.__tela_participante = TelaParticipante()
         self.__controlador_sistema = controlador_sistema
-        self.__id_atual = 0
         self.__participante_DAO = ParticipanteDAO()
+
+    @property
+    def tela_participante(self):
+        return self.__tela_participante
 
     def gera_id(self):
         lista_participantes = self.__participante_DAO.get_all()

@@ -15,7 +15,6 @@ class ControladorCidade:
         self.__tela_cidade = TelaCidade()
         self.__controlador_sistema = controlador_sistema
         self.__controlador_pais = controlador_pais
-        self.__id_atual = 0
 
     def gera_id(self):
         lista_cidades = self.__cidade_DAO.get_all()
@@ -122,7 +121,7 @@ class ControladorCidade:
             cidade_selecionada = self.pega_cidade_por_id()
 
             if cidade_selecionada:
-                self.__cidade_DAO.remove(cidade_selecionada)
+                self.__cidade_DAO.remove(cidade_selecionada.id)
                 self.__tela_cidade.mostra_mensagem(f"A cidade {cidade_selecionada.nome}, "
                                                 f"ID #{cidade_selecionada.id} foi excluída com sucesso!")
         except OpcaoInvalidaException as e:

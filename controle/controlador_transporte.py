@@ -13,8 +13,7 @@ class ControladorTransporte:
         self.__tela_transporte = TelaTransporte()
         self.__controlador_sistema = controlador_sistema
         self.__controlador_empresa = controlador_empresa
-        self.__id_atual = 0
-        self.__transporte_DAO = TransporteDAO
+        self.__transporte_DAO = TransporteDAO()
 
     def gera_id(self):
         lista_transportes = self.__transporte_DAO.get_all()
@@ -140,7 +139,7 @@ class ControladorTransporte:
             transporte = self.pega_transporte_por_id()
 
             if transporte:
-                self.__transporte_DAO.remove(transporte)
+                self.__transporte_DAO.remove(transporte.id)
                 self.__tela_transporte.mostra_mensagem(f"Transporte de ID #{transporte.id} excluído com sucesso!")
             else:
                 self.__tela_transporte.mostra_mensagem("ATENÇÃO: Transporte não encontrado.")

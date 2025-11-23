@@ -19,7 +19,7 @@ class ControladorSistema:
         self.__controlador_transporte = ControladorTransporte(self, self.__controlador_empresa)
         self.__controlador_pais = ControladorPais(self)
         self.__controlador_cidade = ControladorCidade(self, self.__controlador_pais)
-        self.__controlador_passeio = ControladorPasseio(self)
+        self.__controlador_passeio = ControladorPasseio(self, self.__controlador_cidade)
         self.__controlador_viagem = ControladorViagem(self,
                                                       self.__controlador_participante,
                                                       self.__controlador_passeio
@@ -62,14 +62,17 @@ class ControladorSistema:
     def cadastra_empresas(self):
         self.__controlador_empresa.abre_tela()
 
+    def cadastra_transportes(self):
+        self.__controlador_transporte.abre_tela()
+
     def cadastra_paises(self):
         self.__controlador_pais.abre_tela()
 
     def cadastra_cidades(self):
         self.__controlador_cidade.abre_tela()
 
-    def cadastra_transportes(self):
-        self.__controlador_transporte.abre_tela()
+    def cadastra_passeios(self):
+        self.__controlador_passeio.abre_tela()
 
     def encerra_sistema(self):
         exit(0)
@@ -77,9 +80,10 @@ class ControladorSistema:
     def abre_tela(self):
         lista_opcoes = {1: self.cadastra_participantes,
                         2: self.cadastra_empresas,
-                        3: self.cadastra_paises,
-                        4: self.cadastra_cidades,
-                        5: self.cadastra_transportes,
+                        3: self.cadastra_transportes,
+                        4: self.cadastra_paises,
+                        5: self.cadastra_cidades,
+                        6: self.cadastra_passeios,
                         0: self.encerra_sistema
                         }
 

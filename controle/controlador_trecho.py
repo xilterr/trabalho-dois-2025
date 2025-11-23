@@ -1,105 +1,164 @@
 from entidade.trecho import Trecho
 from limite.tela_trecho import TelaTrecho
 from exception.opcao_invalida_exception import OpcaoInvalidaException
-from .controlador_passeio import ControladorPasseio
-from .controlador_transporte import ControladorTransporte
-from .controlador_participante import ControladorParticipante
+from exception.dado_em_branco_exception import DadoEmBrancoException
+from controle.controlador_passeio import ControladorPasseio
+from controle.controlador_transporte import ControladorTransporte
+from DAO.trecho_dao import TrechoDAO
 
 
 class ControladorTrecho:
 
-    def __init__(self, controlador_sistema, ctr_passeio: ControladorPasseio, 
-                 ctr_transporte: ControladorTransporte, ctr_participante: ControladorParticipante):
-        self.__trechos: list[Trecho] = []
+    def __init__(self,
+                controlador_sistema,
+                controlador_passeio: ControladorPasseio,
+                controlador_transporte: ControladorTransporte
+                ):
+        self.__trechos = []
         self.__tela_trecho = TelaTrecho()
         self.__controlador_sistema = controlador_sistema
-        self.__controlador_passeio = ctr_passeio
-        self.__controlador_transporte = ctr_transporte
-        self.__controlador_participante = ctr_participante
-        self.__proximo_id = 1
+        self.__controlador_passeio = ControladorPasseio
+        self.__controlador_transporte = ControladorTransporte
+        self.__trecho_DAO = TrechoDAO()
 
     def gera_id(self):
-        id_gerado = self.__proximo_id
-        self.__proximo_id += 1
-        return id_gerado
+        lista_trechos = self.__trecho_DAO.get_all()
 
-    def pega_trecho_por_id(self, id: int) -> Trecho:
-        for trecho in self.__trechos:
-            if trecho.id == id:
+        if not lista_trechos:
+            return 1
+
+        maior_id = 1 + max([t.id for t in lista_trechos])
+        return maior_id
+
+    def pega_trecho_por_id(self):
+        self.listar_trechos()
+        id_selecionado = self.__tela_trecho.seleciona_trecho()
+
+        if not self.__trecho_DAO.get_all():
+            return None
+
+        for trecho in self.__trecho_DAO.get_all():
+            if trecho.id == id_selecionado:
                 return trecho
+
+        self.__tela_trecho.mostra_mensagem("ATENÇÃO: Trecho com este ID não foi encontrado.")
         return None
 
-    def incluir_trecho(self):
-        self.__controlador_passeio.listar_cidades_disponiveis()
-        self.__controlador_transporte.listar_transportes()
+    def incluir_trecho(self): 
+        dados_trecho = self.__tela_trecho.pega_dados_trecho()
 
-        dados = self.__tela_trecho.pega_dados_trecho()
-        if dados:
-            origem = self.__controlador_passeio.pega_cidade_por_id(dados["id_origem"])
-            destino = self.__controlador_passeio.pega_cidade_por_id(dados["id_destino"])
-            transporte = self.__controlador_transporte.pega_transporte_por_id(dados["id_transporte"])
+        if dados_trecho is None:
+            return
 
-            if origem and destino and transporte:
-                novo_id = self.gera_id()
-                novo_trecho = Trecho(novo_id, dados["data_viagem"], origem, destino, transporte, dados["valor"])
-                self.__trechos.append(novo_trecho)
-                self.__tela_trecho.mostra_mensagem("Trecho incluído com sucesso!")
-            else:
-                self.__tela_trecho.mostra_mensagem("ERRO: Cidade de origem, destino ou transporte não encontrado(s).")
-    
+        try:
+            if (not dados_trecho["data"] or 
+                not dados_trecho["origem"] or 
+                not dados_trecho["destino"]
+                ):
+                raise DadoEmBrancoException()
+
+            novo_id = self.gera_id()
+            novo_trecho = Trecho(
+                novo_id,
+                dados_trecho["data"],
+                dados_trecho["origem"],
+                dados_trecho["destino"],
+                dados_trecho["transporte"]
+            )
+            
+            self.__trecho_DAO.add(novo_trecho)
+            self.__tela_trecho.mostra_mensagem(f"O trecho #{novo_trecho.id} foi cadastrado com sucesso!")
+
+        except DadoEmBrancoException as e:
+            self.__tela_trecho.mostra_mensagem(f"ERRO: {e}")
+
     def listar_trechos(self):
-        self.__tela_trecho.mostra_lista_trechos(self.__trechos)
+        if not self.__trecho_DAO.get_all():
+            self.__tela_trecho.mostra_mensagem("ATENÇÃO: Não há trechos cadastrados")
+            return
+        else:
+            self.__tela_trecho.mostra_mensagem('-------- LISTAGEM DOS TRECHOS ----------')
 
-    def definir_status_compra(self):
-        self.listar_trechos()
-        if not self.__trechos: return
+            for trecho in self.__trecho_DAO.get_all():
+                dados_para_mostrar = {
+                    "id": trecho.id,
+                    "origem": trecho.origem.nome,
+                    "destino": trecho.destino.nome,
+                    "transporte": trecho.transporte.nome,
+                }
+                self.__tela_trecho.mostra_trecho(dados_para_mostrar)
+
+    def alterar_trecho(self):
+        if not self.__trecho_DAO.get_all():
+            self.__tela_trecho.mostra_mensagem("ATENÇÃO: Não há trechos cadastrados")
+            return
 
         try:
-            id_trecho = self.__tela_trecho.seleciona_trecho()
-            trecho = self.pega_trecho_por_id(id_trecho)
-            if trecho:
-                status = self.__tela_trecho.pega_status_compra()
-                trecho.compra_efetuada = status
-                self.__tela_trecho.mostra_mensagem("Status da compra atualizado com sucesso!")
-            else:
-                self.__tela_trecho.mostra_mensagem("ATENÇÃO: Trecho não encontrado.")
+            trecho_selecionado = self.pega_trecho_por_id()
+
+            if trecho_selecionado:
+                novos_dados_trecho = self.__tela_trecho.pega_dados_trecho()
+
+                if novos_dados_trecho is None:
+                    return
+
+                trecho_selecionado.nome = novos_dados_trecho["nome"]
+                trecho_selecionado.telefone = novos_dados_trecho["telefone"]
+                trecho_selecionado.data_nascimento = novos_dados_trecho["data_nascimento"]
+                trecho_selecionado.cpf_passaporte = novos_dados_trecho["cpf_passaporte"]
+
+                self.__trecho_DAO.update(trecho_selecionado)
+
+                self.__tela_trecho.mostra_mensagem("Dados atualizados do trecho:")
+                dados_atualizados = {
+                    "id": trecho_selecionado.id,
+                    "nome": trecho_selecionado.nome,
+                    "telefone": trecho_selecionado.telefone,
+                    "data_nascimento": trecho_selecionado.data_nascimento,
+                    "cpf_passaporte": trecho_selecionado.cpf_passaporte,
+                }
+                self.__tela_trecho.mostra_trecho(dados_atualizados)
         except OpcaoInvalidaException as e:
             self.__tela_trecho.mostra_mensagem(f"ERRO: {e}")
 
-    def definir_responsavel_compra(self):
-        self.listar_trechos()
-        if not self.__trechos: return
+    def excluir_trecho(self):
+        if not self.__trecho_DAO.get_all():
+            self.__tela_trecho.mostra_mensagem("ATENÇÃO: Não há trechos cadastrados")
+            return
 
         try:
-            id_trecho = self.__tela_trecho.seleciona_trecho()
-            trecho = self.pega_trecho_por_id(id_trecho)
-            if trecho:
-                self.__controlador_participante.listar_participantes()
-                id_participante = self.__tela_trecho.le_num_inteiro_positivo("Digite o ID do participante responsável: ")
-                participante = self.__controlador_participante.pega_participante_por_id(id_participante)
-                if participante:
-                    trecho.responsavel_compra = participante
-                    self.__tela_trecho.mostra_mensagem("Responsável pela compra definido com sucesso!")
-                else:
-                    self.__tela_trecho.mostra_mensagem("ATENÇÃO: Participante não encontrado.")
-            else:
-                self.__tela_trecho.mostra_mensagem("ATENÇÃO: Trecho não encontrado.")
+            trecho_selecionado = self.pega_trecho_por_id()
+
+            if trecho_selecionado:
+                self.__trecho_DAO.remove(trecho_selecionado.id)
+                self.__tela_trecho.mostra_mensagem(f"O trecho {trecho_selecionado.nome}, "
+                                                        f"ID #{trecho_selecionado.id} foi excluído com sucesso!")
         except OpcaoInvalidaException as e:
             self.__tela_trecho.mostra_mensagem(f"ERRO: {e}")
+
+    def retornar(self):
+        return
 
     def abre_tela(self):
-        lista_opcoes = {
-            1: self.incluir_trecho,
-            2: self.listar_trechos,
-            5: self.definir_status_compra,
-            6: self.definir_responsavel_compra
-        }
+        lista_opcoes = {1: self.incluir_trecho, 
+                        2: self.listar_trechos,
+                        3: self.alterar_trecho,
+                        4: self.excluir_trecho,
+                        0: self.retornar
+                        }
+
         while True:
             try:
-                opcao = self.__tela_trecho.tela_opcoes()
-                if opcao == 0: break
-                funcao = lista_opcoes.get(opcao)
-                if funcao: funcao()
-                else: raise OpcaoInvalidaException("Opção de menu inválida.")
+                opcao_escolhida = self.__tela_trecho.tela_opcoes()
+                
+                if opcao_escolhida == 0:
+                    self.retornar()
+                    break
+                
+                funcao_escolhida = lista_opcoes.get(opcao_escolhida)
+                if funcao_escolhida:
+                    funcao_escolhida()
+                else:
+                    raise OpcaoInvalidaException("Opção de menu inválida.")
             except OpcaoInvalidaException as e:
-                self.__tela_trecho.mostra_mensagem(f"ERRO: {e}")
+                self.__tela_trecho.mostra_mensagem(f"\nERRO: {e}")

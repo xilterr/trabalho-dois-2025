@@ -1,40 +1,32 @@
-from datetime import datetime
+from datetime import time
 from entidade.cidade import Cidade
-from entidade.participante import Participante
 
 
 class Passeio:
 
     def __init__(self,
                  id: int,
-                 nome: str,
-                 atracao_turistica: str,
+                 atracao: str,
                  cidade: Cidade,
-                 horario_inicio: datetime,
-                 horario_fim: datetime,
-                 valor_passeio: float,
+                 horario_inicio: time,
+                 horario_fim: time,
+                 valor: float,
                  ):
         self.__id = id
-        self.__nome = nome
-        self.__atracao_turistica = atracao_turistica
+        self.__atracao = atracao
         self.__cidade = cidade
-        self.__pais = cidade.pais
         self.__horario_inicio = horario_inicio
         self.__horario_fim = horario_fim
-        self.__valor_passeio = valor_passeio
-        self.__participantes: list[Participante] = []
+        self.__valor = valor
+        self.__participantes = []
 
     @property
     def id(self):
         return self.__id
 
     @property
-    def nome(self):
-        return self.__nome
-
-    @property
-    def atracao_turistica(self):
-        return self.__atracao_turistica
+    def atracao(self):
+        return self.__atracao
 
     @property
     def pais(self):
@@ -53,20 +45,16 @@ class Passeio:
         return self.__horario_fim
 
     @property
-    def valor_passeio(self):
-        return self.__valor_passeio
+    def valor(self):
+        return self.__valor
         
     @property
-    def participante(self):
-        return self.__participante
+    def participantes(self):
+        return self.__participantes
 
-    @nome.setter
-    def nome(self, nome: str):
-        self.__nome = nome
-
-    @atracao_turistica.setter
-    def atracao_turistica(self, atracao_turistica: str):
-        self.__atracao_turistica = atracao_turistica
+    @atracao.setter
+    def atracao(self, atracao: str):
+        self.__atracao = atracao
 
     @pais.setter
     def pais(self, pais):
@@ -77,21 +65,13 @@ class Passeio:
         self.__cidade = cidade
 
     @horario_inicio.setter
-    def horario_inicio(self, horario_inicio: datetime):
+    def horario_inicio(self, horario_inicio: time):
         self.__horario_inicio = horario_inicio
 
     @horario_fim.setter
-    def horario_fim(self, horario_fim: datetime):
+    def horario_fim(self, horario_fim: time):
         self.__horario_fim = horario_fim
 
-    @valor_passeio.setter
-    def valor_passeio(self, valor_passeio: float):
-        self.__valor_passeio = valor_passeio
-
-    def __str__(self):
-        return (f"  ID: {self.id}\n"
-                f"  Passeio: {self.nome} ({self.atracao_turistica})\n"
-                f"  Local: {self.cidade.nome}, {self.cidade.pais.nome}\n"
-                f"  Horário: de {self.horario_inicio.strftime('%d/%m/%Y %H:%M')} a {self.horario_fim.strftime('%d/%m/%Y %H:%M')}\n"
-                f"  Valor: R$ {self.valor_passeio:.2f}\n"
-                "  -----------------")
+    @valor.setter
+    def valor(self, valor: float):
+        self.__valor = valor

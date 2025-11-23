@@ -10,7 +10,6 @@ class ControladorEmpresa:
     def __init__(self, controlador_sistema):
         self.__tela_empresa = TelaEmpresa()
         self.__controlador_sistema = controlador_sistema
-        self.__id_atual = 0
         self.__empresa_DAO = EmpresaDAO()
 
     def gera_id(self):
@@ -121,7 +120,7 @@ class ControladorEmpresa:
         try:
             empresa_selecionada = self.pega_empresa_por_id()
             if empresa_selecionada:
-                self.__empresa_DAO.remove(empresa_selecionada)
+                self.__empresa_DAO.remove(empresa_selecionada.id)
                 self.__tela_empresa.mostra_mensagem(f"A empresa {empresa_selecionada.nome}, "
                                                     f"ID #{empresa_selecionada.id} foi excluída com sucesso!")
         except OpcaoInvalidaException as e:

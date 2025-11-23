@@ -17,15 +17,13 @@ class ControladorViagem:
         self.__controlador_sistema = controlador_sistema
         self.__controlador_participante = controlador_participante
         self.__controlador_passeio = controlador_passeio
-        self.__proximo_id_viagem = 1
-        self.__proximo_id_dia = 1
 
     def gera_id(self):
         self.__id_atual += 1
         id_gerado = self.__id_atual
         return id_gerado
 
-    def pega_viagem_por_id(self, id: int) -> Viagem:
+    def pega_viagem_por_id(self, id: int):
         for viagem in self.__viagens:
             if viagem.id == id:
                 return viagem
