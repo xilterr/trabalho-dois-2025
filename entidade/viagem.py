@@ -66,6 +66,3 @@ class Viagem:
     def add_trecho(self, trecho: Trecho):
         if isinstance(trecho, Trecho):
             self.__trechos.append(trecho)
-            
-    def __str__(self) -> str:
-        return f"Viagem(ID: {self.id}, Nome: '{self.nome}', De {self.data_inicio} a {self.data_fim})"

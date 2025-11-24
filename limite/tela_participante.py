@@ -49,3 +49,23 @@ class TelaParticipante(TelaAbstract):
     def seleciona_participante(self):
         id_participante = self.le_num_inteiro_positivo("Digite o ID do participante: ")
         return id_participante
+
+    def pega_dados_cartao(self):
+        print("-------- DADOS DO CARTÃO ----------")
+        numero = input("Número do cartão: ")
+        bandeira = input("Bandeira: ")
+        print('\n')
+
+        return {"numero": numero,
+                "bandeira": bandeira
+                }
+
+    def seleciona_cartao(self):
+        id_cartao = self.le_num_inteiro_positivo("Digite o ID do cartão: ")
+        return id_cartao
+
+    def mostra_cartao(self, dados_cartao):
+        print(f"ID do cartão: #{dados_cartao['id']}")
+        print(f"Número do cartão: {dados_cartao['numero']}")
+        print(f"Bandeira do cartão: {dados_cartao['bandeira']}")
+        print("\n")

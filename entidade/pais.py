@@ -14,6 +14,3 @@ class Pais:
     @nome.setter
     def nome(self, nome: str):
         self.__nome = nome
-
-    def __str__(self):
-        return f"ID: {self.id} | País: {self.nome}"

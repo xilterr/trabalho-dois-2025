@@ -47,10 +47,3 @@ class Transporte:
     @empresa.setter
     def empresa(self, empresa: Empresa):
         self.__empresa = empresa
-
-    def __str__(self):
-        return (f"  ID: {self.id}\n"
-                f"  Nome: {self.nome}\n"
-                f"  Tipo: {self.tipo.name.capitalize()}\n"
-                f"  Empresa: {self.empresa.nome}\n"
-                "  -----------------")

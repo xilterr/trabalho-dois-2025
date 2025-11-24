@@ -25,6 +25,3 @@ class Cidade:
     @pais.setter
     def pais(self, pais: Pais):
         self.__pais = pais
-
-    def __str__(self):
-        return f"ID: {self.id} | Cidade: {self.nome}, {self.pais.nome}"

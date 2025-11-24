@@ -8,6 +8,7 @@ class Participante(Pessoa):
         super().__init__(id, nome, telefone)
         self.__cpf_passaporte = cpf_passaporte
         self.__data_nascimento = data_nascimento
+        self.__cartoes = []
 
     @property
     def cpf_passaporte(self):
@@ -24,4 +25,7 @@ class Participante(Pessoa):
     @data_nascimento.setter
     def data_nascimento(self, data_nascimento):
         self.__data_nascimento = data_nascimento
-    
+
+    @property
+    def cartoes(self):
+        return self.__cartoes

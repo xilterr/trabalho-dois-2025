@@ -1,9 +1,13 @@
 from entidade.participante import Participante
+from entidade.cartao_credito import CartaoCredito
 from limite.tela_participante import TelaParticipante
 from exception.opcao_invalida_exception import OpcaoInvalidaException
 from exception.participante_repetido_exception import ParticipanteRepetidoException
 from exception.dado_em_branco_exception import DadoEmBrancoException
+from exception.cartao_repetido_exception import CartaoRepetidoException
+from exception.cartao_inexistente_exception import CartaoInexistenteException
 from DAO.participante_dao import ParticipanteDAO
+
 
 class ControladorParticipante:
 
@@ -24,6 +28,11 @@ class ControladorParticipante:
 
         maior_id = 1 + max([p.id for p in lista_participantes])
         return maior_id
+
+    def gera_id_cartao(self, participante):
+        if not participante.cartoes:
+            return 1
+        return max([c.id for c in participante.cartoes]) + 1
 
     def pega_participante_por_id(self):
         self.listar_participantes()
@@ -134,6 +143,93 @@ class ControladorParticipante:
                 self.__tela_participante.mostra_mensagem(f"O participante {participante_selecionado.nome}, "
                                                         f"ID #{participante_selecionado.id} foi excluído com sucesso!")
         except OpcaoInvalidaException as e:
+            self.__tela_participante.mostra_mensagem(f"ERRO: {e}")
+
+    def adicionar_cartao(self):
+        self.__tela_participante.mostra_mensagem("\n--- ADICIONAR CARTÃO DE CRÉDITO ---")
+        participante = self.pega_participante_por_id()
+        if not participante:
+            return
+
+        dados_cartao = self.__tela_participante.pega_dados_cartao()
+        if not dados_cartao:
+            return
+
+        try:
+            if not dados_cartao["numero"] or not dados_cartao["bandeira"]:
+                raise DadoEmBrancoException()
+
+            for cartao in participante.cartoes:
+                if (str(cartao.numero) == str(dados_cartao["numero"]) and 
+                    cartao.bandeira.lower() == dados_cartao["bandeira"].lower()):
+                    raise CartaoRepetidoException()
+
+            novo_id_cartao = self.gera_id_cartao(participante)
+            novo_cartao = CartaoCredito(
+                novo_id_cartao,
+                dados_cartao["numero"],
+                dados_cartao["bandeira"]
+            )
+
+            participante.cartoes.append(novo_cartao)
+            self.__participante_DAO.update(participante)
+            self.__tela_participante.mostra_mensagem("Cartão adicionado com sucesso!")
+
+        except (DadoEmBrancoException, CartaoRepetidoException) as e:
+            self.__tela_participante.mostra_mensagem(f"ERRO: {e}")
+
+    def listar_cartoes(self):
+        print("\n--- LISTAR CARTÕES ---")
+        participante = self.pega_participante_por_id()
+        if not participante:
+            return
+
+        if not participante.cartoes:
+            self.__tela_participante.mostra_mensagem("Este participante não possui cartões cadastrados.")
+            return
+
+        for cartao in participante.cartoes:
+            dados_cartao = {
+                "id": cartao.id,
+                "numero": cartao.numero,
+                "bandeira": cartao.bandeira
+            }
+            self.__tela_participante.mostra_cartao(dados_cartao)
+
+    def excluir_cartao(self, participante):
+        participante = self.pega_participante_por_id()
+        if not participante:
+            return
+
+        if not participante.cartoes:
+            self.__tela_participante.mostra_mensagem("Este participante não possui cartões para excluir.")
+            return
+
+        for cartao in participante.cartoes:
+            dados = {"id": cartao.id,
+                     "numero": cartao.numero,
+                     "bandeira": cartao.bandeira
+                     }
+            self.__tela_participante.mostra_cartao(dados)
+
+        id_cartao = self.__tela_participante.seleciona_cartao()
+
+        try:
+            cartao_para_remover = None
+            
+            for cartao in participante.cartoes:
+                if cartao.id == id_cartao:
+                    cartao_para_remover = cartao
+                    break
+            
+            if cartao_para_remover:
+                participante.cartoes.remove(cartao_para_remover)
+                self.__participante_DAO.update(participante)
+                self.__tela_participante.mostra_mensagem("Cartão removido com sucesso!")
+            else:
+                raise CartaoInexistenteException()
+
+        except CartaoInexistenteException as e:
             self.__tela_participante.mostra_mensagem(f"ERRO: {e}")
 
     def retornar(self):

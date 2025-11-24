@@ -1,35 +1,67 @@
 from datetime import date
-from enum import Enum
-from typing import Optional
-from .pessoa import Pessoa
+from entidade.participante import Participante
+from entidade.viagem import Viagem
+from entidade.participante import Participante
+from entidade.metodo_pagamento import MetodoPagamento 
 
-
-class MetodoPagamento(Enum):
-
-    DINHEIRO = 1
-    PIX = 2
-    CREDITO = 3
-
-class BandeiraCartao(Enum):
-
-    VISA = 1
-    MASTERCARD = 2
-    ELO = 3
 
 class Pagamento:
 
     def __init__(self,
-                 valor: float,
-                 data_pagamento: date,
-                 metodo: MetodoPagamento,
-                 pagador: Optional[Pessoa] = None,
-                 dados_pix: dict = None,
-                 dados_credito: dict = None
+                 id: int,
+                 modalidade: MetodoPagamento,
+                 data: date,
+                 viagem: Viagem,
+                 pessoa_pagante: Participante,
+                 valor_pago: float                 
                  ):
-        self.__valor = valor
-        self.__data_pagamento = data_pagamento
-        self.metodo = metodo
-        self.pagador = pagador
-        self.dados_pix = dados_pix
-        self.dados_credito = dados_credito
+        self.__id = id
+        self.__modalidade = modalidade
+        self.__data = data
+        self.__viagem = viagem
+        self.__pessoa_pagante = pessoa_pagante
+        self.__valor_pago = valor_pago
 
+    @property
+    def id(self):
+        return self.__id
+
+    @property
+    def modalidade(self):
+        return self.__modalidade
+
+    @modalidade.setter
+    def modalidade(self, modalidade: MetodoPagamento):
+        self.__modalidade = modalidade
+
+    @property
+    def data(self):
+        return self.__data
+
+    @data.setter
+    def data(self, data: date):
+        self.__data = data
+
+    @property
+    def viagem(self):
+        return self.__viagem
+
+    @viagem.setter
+    def viagem(self, viagem: Viagem):
+        self.__viagem = viagem
+
+    @property
+    def pessoa_pagante(self):
+        return self.__pessoa_pagante
+
+    @pessoa_pagante.setter
+    def pessoa_pagante(self, pessoa_pagante: Participante):
+        self.__pessoa_pagante = pessoa_pagante
+
+    @property
+    def valor_pago(self):
+        return self.__valor_pago
+
+    @valor_pago.setter
+    def valor_pago(self, valor_pago: float):
+        self.__valor_pago = valor_pago
