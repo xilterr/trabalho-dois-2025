@@ -16,9 +16,9 @@ class TelaTrecho(TelaAbstract):
         return self.le_num_inteiro_positivo("Escolha uma opção: ", [1, 2, 3, 4, 0])
 
     def pega_dados_trecho(self) -> dict:
-        print("-------- DADOS DO PARTICIPANTE ----------")
+        print("-------- DADOS DO TRECHO ----------")
         try:
-            str_data_trecho = input("Data de Nascimento (AAAA-MM-DD): ")
+            str_data_trecho = input("Data do trecho (AAAA-MM-DD): ")
             ano, mes, dia = map(int, str_data_trecho.split('-'))
             data_trecho = date(ano, mes, dia)
         except ValueError:
@@ -28,7 +28,7 @@ class TelaTrecho(TelaAbstract):
         print('\n')
         return {"data": data_trecho}
 
-    def mostra_trechos(self, dados_trecho):
+    def mostra_trecho(self, dados_trecho):
         print(f"Data: #{dados_trecho['data'].strftime('%d/%m/%Y')}")
         print(f"Cidade origem: {dados_trecho['origem']}")
         print(f"Cidade destino: {dados_trecho['destino']}")

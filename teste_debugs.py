@@ -1,114 +1,132 @@
 import unittest
 from unittest.mock import MagicMock
-from datetime import time
-from controle.controlador_passeio import ControladorPasseio
-from controle.controlador_participante import ControladorParticipante
-from entidade.passeio import Passeio
-from entidade.participante import Participante
+from datetime import date
+from controle.controlador_trecho import ControladorTrecho
+from entidade.trecho import Trecho
 from entidade.cidade import Cidade
+from entidade.transporte import Transporte
 from entidade.pais import Pais
+from entidade.empresa import Empresa
+from entidade.tipo_transporte import TipoTransporte
 
-class TestParticipantesEmPasseio(unittest.TestCase):
+class TestControladorTrechoFinal(unittest.TestCase):
 
     def setUp(self):
-        # 1. Cria Mocks para o sistema e controladores vizinhos
+        # Mocks das dependências
         self.mock_sistema = MagicMock()
+        self.mock_ctrl_passeio = MagicMock()
+        self.mock_ctrl_transporte = MagicMock()
         self.mock_ctrl_cidade = MagicMock()
-        
-        # Mockamos o ControladorParticipante inteiro para podermos simular suas respostas
-        self.mock_ctrl_participante = MagicMock(spec=ControladorParticipante)
-        
-        # 2. Instancia o Controlador de Passeio (o alvo do teste)
-        self.ctrl_passeio = ControladorPasseio(
-            self.mock_sistema, 
-            self.mock_ctrl_cidade, 
-            self.mock_ctrl_participante
+
+        # Instancia o Controlador a ser testado
+        self.ctrl = ControladorTrecho(
+            self.mock_sistema,
+            self.mock_ctrl_passeio,
+            self.mock_ctrl_transporte,
+            self.mock_ctrl_cidade
         )
 
-        # 3. Substitui DAO e Tela internos por Mocks (para não salvar nada)
-        self.ctrl_passeio._ControladorPasseio__passeio_DAO = MagicMock()
-        self.ctrl_passeio._ControladorPasseio__tela_passeio = MagicMock()
+        # Substitui DAO e Tela internos por Mocks
+        self.ctrl._ControladorTrecho__trecho_DAO = MagicMock()
+        self.ctrl._ControladorTrecho__tela_trecho = MagicMock()
 
-        # 4. Cria dados falsos para o cenário
-        self.cidade = Cidade(1, "Floripa", Pais(1, "BR"))
-        self.passeio = Passeio(1, "Passeio Barco", self.cidade, time(10,0), time(12,0), 50.0)
-        self.participante = Participante(10, "João", "999", "123456", "2000-01-01")
+        # Dados Fake para simulação
+        self.pais = Pais(1, "BR")
+        self.origem = Cidade(1, "Floripa", self.pais)
+        self.destino = Cidade(2, "Curitiba", self.pais)
+        self.empresa = Empresa(1, "Viação X", "111", "CNPJ")
+        self.transporte = Transporte(1, "Bus Leito", TipoTransporte.onibus, self.empresa)
 
-        # Configura o DAO para sempre retornar nosso passeio fake
-        self.ctrl_passeio._ControladorPasseio__passeio_DAO.get_all.return_value = [self.passeio]
-        
-        # Configura a tela para sempre selecionar o ID 1 (nosso passeio)
-        self.ctrl_passeio._ControladorPasseio__tela_passeio.seleciona_passeio.return_value = 1
-
-    def test_adicionar_participante_ao_passeio(self):
-        """Teste: Adicionar um participante a um passeio existente"""
-        print("Testando ADICIONAR participante em passeio...")
+    def test_1_incluir_trecho(self):
+        """Teste CREATE: Incluir Trecho com sucesso"""
+        print("Testando INCLUIR trecho...")
 
         # ARRANGE
-        # O controlador de participante vai retornar nosso 'João' quando chamado
-        self.mock_ctrl_participante.pega_participante_por_id.return_value = self.participante
+        # Simula seleção: 1º Origem, 2º Destino
+        self.mock_ctrl_cidade.pega_cidade_por_id.side_effect = [self.origem, self.destino]
+        # Simula seleção transporte
+        self.mock_ctrl_transporte.pega_transporte_por_id.return_value = self.transporte
         
-        # Garante lista vazia no inicio
-        self.passeio._Passeio__participantes = []
+        # Simula data vinda da tela
+        self.ctrl._ControladorTrecho__tela_trecho.pega_dados_trecho.return_value = {"data": date(2023, 12, 25)}
+        
+        # DAO Vazio para gerar ID 1
+        self.ctrl._ControladorTrecho__trecho_DAO.get_all.return_value = []
 
         # ACT
-        self.ctrl_passeio.adicionar_participante()
+        self.ctrl.incluir_trecho()
 
         # ASSERT
-        # 1. Verifica se o João entrou na lista do objeto Passeio
-        self.assertIn(self.participante, self.passeio.participantes)
-        self.assertEqual(len(self.passeio.participantes), 1)
+        # Verifica se chamou o DAO.add
+        self.ctrl._ControladorTrecho__trecho_DAO.add.assert_called_once()
         
-        # 2. Verifica se o DAO de Passeio foi chamado para salvar a atualização
-        self.ctrl_passeio._ControladorPasseio__passeio_DAO.update.assert_called_with(self.passeio)
-        
-        print("-> Sucesso: Participante adicionado e passeio atualizado.")
+        # Verifica dados do objeto salvo
+        args, _ = self.ctrl._ControladorTrecho__trecho_DAO.add.call_args
+        trecho_salvo = args[0]
+        self.assertEqual(trecho_salvo.origem, self.origem)
+        self.assertEqual(trecho_salvo.destino, self.destino)
+        self.assertEqual(trecho_salvo.transporte, self.transporte)
+        print("-> Sucesso: Trecho incluído.")
 
-    def test_adicionar_participante_duplicado(self):
-        """Teste: Tentar adicionar o mesmo participante duas vezes"""
-        print("Testando BLOQUEIO de duplicidade...")
+    def test_2_listar_trechos(self):
+        """Teste READ: Listar Trechos"""
+        print("Testando LISTAR trechos...")
 
         # ARRANGE
-        # João já está na lista
-        self.passeio.participantes.append(self.participante)
-        
-        # Usuário seleciona João de novo
-        self.mock_ctrl_participante.pega_participante_por_id.return_value = self.participante
+        trecho_fake = Trecho(1, date(2023,1,1), self.origem, self.destino, self.transporte)
+        self.ctrl._ControladorTrecho__trecho_DAO.get_all.return_value = [trecho_fake]
 
         # ACT
-        self.ctrl_passeio.adicionar_participante()
+        self.ctrl.listar_trechos()
 
         # ASSERT
-        # Lista não deve crescer
-        self.assertEqual(len(self.passeio.participantes), 1)
-        
-        # DAO.update NÃO deve ser chamado
-        self.ctrl_passeio._ControladorPasseio__passeio_DAO.update.assert_not_called()
-        
-        print("-> Sucesso: Duplicidade evitada.")
+        self.ctrl._ControladorTrecho__tela_trecho.mostra_trecho.assert_called()
+        print("-> Sucesso: Dados enviados para tela.")
 
-    def test_remover_participante_do_passeio(self):
-        """Teste: Remover participante da lista do passeio"""
-        print("Testando REMOVER participante de passeio...")
+    def test_3_alterar_trecho(self):
+        """Teste UPDATE: Alterar Trecho"""
+        print("Testando ALTERAR trecho...")
 
         # ARRANGE
-        # João está na lista
-        self.passeio.participantes.append(self.participante)
+        trecho_existente = Trecho(1, date(2020,1,1), self.origem, self.destino, self.transporte)
+        self.ctrl._ControladorTrecho__trecho_DAO.get_all.return_value = [trecho_existente]
         
-        # Simulamos que o usuário digitou o ID 10 (ID do João) na tela de passeio
-        self.ctrl_passeio._ControladorPasseio__tela_passeio.le_num_inteiro_positivo.return_value = 10
+        # Tela seleciona ID 1
+        self.ctrl._ControladorTrecho__tela_trecho.seleciona_trecho.return_value = 1
+        
+        # Simula NOVAS escolhas (Inverte cidades e mantem transporte)
+        self.mock_ctrl_cidade.pega_cidade_por_id.side_effect = [self.destino, self.origem]
+        self.mock_ctrl_transporte.pega_transporte_por_id.return_value = self.transporte
+        
+        # Nova data
+        self.ctrl._ControladorTrecho__tela_trecho.pega_dados_trecho.return_value = {"data": date(2025, 1, 1)}
 
         # ACT
-        self.ctrl_passeio.remover_participante()
+        self.ctrl.alterar_trecho()
 
         # ASSERT
-        # 1. Lista deve estar vazia
-        self.assertNotIn(self.participante, self.passeio.participantes)
-        
-        # 2. DAO deve ter sido chamado para salvar
-        self.ctrl_passeio._ControladorPasseio__passeio_DAO.update.assert_called_with(self.passeio)
-        
-        print("-> Sucesso: Participante removido e passeio atualizado.")
+        self.ctrl._ControladorTrecho__trecho_DAO.update.assert_called_once()
+        # Verifica alteração em memória
+        self.assertEqual(trecho_existente.data, date(2025, 1, 1))
+        self.assertEqual(trecho_existente.origem, self.destino) # Mudou de Floripa para Curitiba
+        print("-> Sucesso: Trecho atualizado.")
+
+    def test_4_excluir_trecho(self):
+        """Teste DELETE: Excluir Trecho"""
+        print("Testando EXCLUIR trecho...")
+
+        # ARRANGE
+        trecho_del = Trecho(1, date(2023,1,1), self.origem, self.destino, self.transporte)
+        self.ctrl._ControladorTrecho__trecho_DAO.get_all.return_value = [trecho_del]
+        self.ctrl._ControladorTrecho__tela_trecho.seleciona_trecho.return_value = 1
+
+        # ACT
+        self.ctrl.excluir_trecho()
+
+        # ASSERT
+        # Verifica se removeu pelo ID 1
+        self.ctrl._ControladorTrecho__trecho_DAO.remove.assert_called_with(1)
+        print("-> Sucesso: Trecho removido.")
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

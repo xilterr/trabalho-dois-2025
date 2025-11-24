@@ -4,6 +4,7 @@ from exception.opcao_invalida_exception import OpcaoInvalidaException
 from exception.dado_em_branco_exception import DadoEmBrancoException
 from controle.controlador_passeio import ControladorPasseio
 from controle.controlador_transporte import ControladorTransporte
+from controle.controlador_cidade import ControladorCidade
 from DAO.trecho_dao import TrechoDAO
 
 
@@ -12,13 +13,15 @@ class ControladorTrecho:
     def __init__(self,
                 controlador_sistema,
                 controlador_passeio: ControladorPasseio,
-                controlador_transporte: ControladorTransporte
+                controlador_transporte: ControladorTransporte,
+                controlador_cidade: ControladorCidade
                 ):
         self.__trechos = []
         self.__tela_trecho = TelaTrecho()
         self.__controlador_sistema = controlador_sistema
-        self.__controlador_passeio = ControladorPasseio
-        self.__controlador_transporte = ControladorTransporte
+        self.__controlador_passeio = controlador_passeio
+        self.__controlador_cidade = controlador_cidade
+        self.__controlador_transporte = controlador_transporte
         self.__trecho_DAO = TrechoDAO()
 
     def gera_id(self):
@@ -45,27 +48,39 @@ class ControladorTrecho:
         return None
 
     def incluir_trecho(self): 
-        dados_trecho = self.__tela_trecho.pega_dados_trecho()
+        origem = self.__controlador_cidade.pega_cidade_por_id()
+        if origem is None:
+            return
 
+        destino = self.__controlador_cidade.pega_cidade_por_id()
+        if destino is None:
+            return
+
+        if origem.id == destino.id:
+            #quero que tenha um raise OpcaoInvalidaException, todos erros precisam ser mostrados com exception
+            self.__tela_trecho.mostra_mensagem("ERRO: Origem e destino não podem ser iguais.")
+            return
+
+        transporte = self.__controlador_transporte.pega_transporte_por_id()
+        if transporte is None:
+            return
+
+        dados_trecho = self.__tela_trecho.pega_dados_trecho()
         if dados_trecho is None:
             return
 
         try:
-            if (not dados_trecho["data"] or 
-                not dados_trecho["origem"] or 
-                not dados_trecho["destino"]
-                ):
+            if not dados_trecho["data"]:
                 raise DadoEmBrancoException()
 
             novo_id = self.gera_id()
             novo_trecho = Trecho(
                 novo_id,
                 dados_trecho["data"],
-                dados_trecho["origem"],
-                dados_trecho["destino"],
-                dados_trecho["transporte"]
+                origem,
+                destino,
+                transporte
             )
-            
             self.__trecho_DAO.add(novo_trecho)
             self.__tela_trecho.mostra_mensagem(f"O trecho #{novo_trecho.id} foi cadastrado com sucesso!")
 
@@ -82,9 +97,11 @@ class ControladorTrecho:
             for trecho in self.__trecho_DAO.get_all():
                 dados_para_mostrar = {
                     "id": trecho.id,
+                    "data": trecho.data,
                     "origem": trecho.origem.nome,
                     "destino": trecho.destino.nome,
                     "transporte": trecho.transporte.nome,
+                    "empresa": trecho.transporte.empresa.nome
                 }
                 self.__tela_trecho.mostra_trecho(dados_para_mostrar)
 
@@ -97,28 +114,45 @@ class ControladorTrecho:
             trecho_selecionado = self.pega_trecho_por_id()
 
             if trecho_selecionado:
-                novos_dados_trecho = self.__tela_trecho.pega_dados_trecho()
-
-                if novos_dados_trecho is None:
+                nova_origem = self.__controlador_cidade.pega_cidade_por_id()
+                if nova_origem is None:
                     return
 
-                trecho_selecionado.nome = novos_dados_trecho["nome"]
-                trecho_selecionado.telefone = novos_dados_trecho["telefone"]
-                trecho_selecionado.data_nascimento = novos_dados_trecho["data_nascimento"]
-                trecho_selecionado.cpf_passaporte = novos_dados_trecho["cpf_passaporte"]
+                novo_destino = self.__controlador_cidade.pega_cidade_por_id()
+                if novo_destino is None:
+                    return
+
+                if nova_origem.id == novo_destino.id:
+                    raise OpcaoInvalidaException("Origem e destino não podem ser iguais.")
+
+                novo_transporte = self.__controlador_transporte.pega_transporte_por_id()
+                if novo_transporte is None:
+                    return
+
+                novos_dados = self.__tela_trecho.pega_dados_trecho()
+                if novos_dados is None:
+                    return
+
+                trecho_selecionado.origem = nova_origem
+                trecho_selecionado.destino = novo_destino
+                trecho_selecionado.transporte = novo_transporte
+                trecho_selecionado.data = novos_dados["data"]
 
                 self.__trecho_DAO.update(trecho_selecionado)
 
-                self.__tela_trecho.mostra_mensagem("Dados atualizados do trecho:")
+                self.__tela_trecho.mostra_mensagem("Dados do trecho atualizados com sucesso!")
+                
                 dados_atualizados = {
                     "id": trecho_selecionado.id,
-                    "nome": trecho_selecionado.nome,
-                    "telefone": trecho_selecionado.telefone,
-                    "data_nascimento": trecho_selecionado.data_nascimento,
-                    "cpf_passaporte": trecho_selecionado.cpf_passaporte,
+                    "data": trecho_selecionado.data,
+                    "origem": trecho_selecionado.origem.nome,
+                    "destino": trecho_selecionado.destino.nome,
+                    "transporte": trecho_selecionado.transporte.nome,
+                    "empresa": trecho_selecionado.transporte.empresa.nome
                 }
                 self.__tela_trecho.mostra_trecho(dados_atualizados)
-        except OpcaoInvalidaException as e:
+
+        except (DadoEmBrancoException, OpcaoInvalidaException) as e:
             self.__tela_trecho.mostra_mensagem(f"ERRO: {e}")
 
     def excluir_trecho(self):
@@ -126,13 +160,12 @@ class ControladorTrecho:
             self.__tela_trecho.mostra_mensagem("ATENÇÃO: Não há trechos cadastrados")
             return
 
-        try:
+        try:    
             trecho_selecionado = self.pega_trecho_por_id()
 
             if trecho_selecionado:
                 self.__trecho_DAO.remove(trecho_selecionado.id)
-                self.__tela_trecho.mostra_mensagem(f"O trecho {trecho_selecionado.nome}, "
-                                                        f"ID #{trecho_selecionado.id} foi excluído com sucesso!")
+                self.__tela_trecho.mostra_mensagem(f"O trecho #{trecho_selecionado.id}, foi excluído com sucesso!")
         except OpcaoInvalidaException as e:
             self.__tela_trecho.mostra_mensagem(f"ERRO: {e}")
 
@@ -161,4 +194,4 @@ class ControladorTrecho:
                 else:
                     raise OpcaoInvalidaException("Opção de menu inválida.")
             except OpcaoInvalidaException as e:
-                self.__tela_trecho.mostra_mensagem(f"\nERRO: {e}")
+                self.__tela_trecho.mostra_mensagem(f"\nERRO: {e}")##

@@ -8,28 +8,28 @@ class Trecho:
 
     def __init__(self,
                  id: int,
-                 data_viagem: date,
+                 data: date,
                  origem: Cidade,
                  destino: Cidade,
-                 meio_transporte: Transporte,
+                 transporte: Transporte,
                  ):
         self.__id = id
-        self.__data_viagem = data_viagem
+        self.__data = data
         self.__origem = origem
         self.__destino = destino
-        self.__meio_transporte = meio_transporte
+        self.__transporte = transporte
 
     @property
     def id(self):
         return self.__id
 
     @property
-    def data_viagem(self):
-        return self.__data_viagem
+    def data(self):
+        return self.__data
 
-    @data_viagem.setter
-    def data_viagem(self, data_viagem: date):
-        self.__data_viagem = data_viagem
+    @data.setter
+    def data(self, data: date):
+        self.__data = data
 
     @property
     def origem(self):
@@ -48,9 +48,9 @@ class Trecho:
         self.__destino = destino
 
     @property
-    def meio_transporte(self):
-        return self.__meio_transporte
+    def transporte(self):
+        return self.__transporte
 
-    @meio_transporte.setter
-    def meio_transporte(self, meio_transporte: Transporte):
-        self.__meio_transporte = meio_transporte
+    @transporte.setter
+    def transporte(self, transporte: Transporte):
+        self.__transporte = transporte
