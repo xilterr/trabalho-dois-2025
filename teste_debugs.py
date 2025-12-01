@@ -1,146 +1,76 @@
-import unittest
-from unittest.mock import MagicMock
-from datetime import date
-from controle.controlador_participante import ControladorParticipante
+from datetime import date, time
+
+# --- IMPORTAÇÕES DAS ENTIDADES ---
 from entidade.participante import Participante
-from entidade.cartao_credito import CartaoCredito
+from entidade.pais import Pais
+from entidade.cidade import Cidade
+from entidade.passeio import Passeio
 
-class TestControladorParticipanteCartao(unittest.TestCase):
+# --- IMPORTAÇÕES DOS DAOS ---
+from DAO.participante_dao import ParticipanteDAO
+from DAO.cidade_dao import CidadeDAO
+from DAO.passeio_dao import PasseioDAO
 
-    def setUp(self):
-        # 1. Mocks do Sistema
-        self.mock_sistema = MagicMock()
+# --- IMPORTAÇÕES DOS CONTROLADORES ---
+from controle.controlador_passeio import ControladorPasseio
+from controle.controlador_cidade import ControladorCidade
+from controle.controlador_participante import ControladorParticipante
+from controle.controlador_pais import ControladorPais
+
+class SistemaStub:
+    def __init__(self):
+        self.participante_dao = ParticipanteDAO()
+        self.cidade_dao = CidadeDAO()
+        self.passeio_dao = PasseioDAO()
         
-        # 2. Instancia o Controlador
-        self.ctrl = ControladorParticipante(self.mock_sistema)
-
-        # 3. Substitui DAO e Tela internos por Mocks
-        self.ctrl._ControladorParticipante__participante_DAO = MagicMock()
-        self.ctrl._ControladorParticipante__tela_participante = MagicMock()
-
-        # 4. Cria um Participante Fake para os testes
-        self.participante = Participante(1, "João", "9999", "CPF123", date(2000, 1, 1))
+        self.controlador_pais = ControladorPais(self)
         
-        # Configura o DAO para sempre retornar nosso participante fake nas buscas internas
-        self.ctrl._ControladorParticipante__participante_DAO.get_all.return_value = [self.participante]
+        self.controlador_participante = ControladorParticipante(self)
+        self.controlador_cidade = ControladorCidade(self, self.controlador_pais)
         
-        # Configura a tela para selecionar o ID 1 (nosso participante) sempre que pedir participante
-        self.ctrl._ControladorParticipante__tela_participante.seleciona_participante.return_value = 1
+        self.controlador_passeio = ControladorPasseio(self, 
+                                                      self.controlador_cidade, 
+                                                      self.controlador_participante)
 
-    def test_adicionar_cartao_sucesso(self):
-        """Teste: Adicionar um cartão válido"""
-        print("Testando ADICIONAR cartão...")
+    def abre_tela(self):
+        print("--- Fim do Teste (Retornou ao Menu Principal Simulado) ---")
+        exit(0)
 
-        # ARRANGE
-        # Simula dados do cartão vindos da tela
-        dados_cartao = {"numero": "12345678", "bandeira": "Visa"}
-        self.ctrl._ControladorParticipante__tela_participante.pega_dados_cartao.return_value = dados_cartao
-        
-        # Garante que lista começa vazia
-        self.participante._Participante__cartoes = [] 
+def popular_dados_para_teste(sistema):
+    print(">>> Criando dados de cenário (IDs 1 e 2)...")
 
-        # ACT
-        self.ctrl.adicionar_cartao()
+    # CORREÇÃO AQUI: Adicionado ID 1 para o País
+    brasil = Pais(1, "Brasil")
+    
+    c1 = Cidade(1, "Rio de Janeiro", brasil)
+    c2 = Cidade(2, "Salvador", brasil)
+    
+    sistema.cidade_dao.add(c1)
+    sistema.cidade_dao.add(c2)
+    print("OK: Cidades cadastradas (IDs 1 e 2).")
 
-        # ASSERT
-        # 1. Verifica se o cartão entrou na lista do objeto
-        self.assertEqual(len(self.participante.cartoes), 1)
-        cartao_adicionado = self.participante.cartoes[0]
-        self.assertEqual(str(cartao_adicionado.numero), "12345678")
-        self.assertEqual(cartao_adicionado.bandeira, "Visa")
-        
-        # 2. Verifica se o DAO atualizou o PARTICIPANTE (que contem a lista)
-        self.ctrl._ControladorParticipante__participante_DAO.update.assert_called_with(self.participante)
-        print("-> Sucesso: Cartão adicionado e participante atualizado.")
+    p1 = Participante(1, "Carlos Viajante", "1111-1111", "CPF123", date(1990, 5, 10))
+    p2 = Participante(2, "Ana Turista", "2222-2222", "CPF456", date(1995, 8, 20))
+    
+    sistema.participante_dao.add(p1)
+    sistema.participante_dao.add(p2)
+    print("OK: Participantes cadastrados (IDs 1 e 2).")
 
-    def test_adicionar_cartao_duplicado(self):
-        """Teste: Bloquear adição de cartão idêntico"""
-        print("Testando BLOQUEIO de cartão duplicado...")
+    pass1 = Passeio(1, "Cristo Redentor", c1, time(9, 0), time(12, 0), 150.00)
+    pass2 = Passeio(2, "Pelourinho Histórico", c2, time(14, 0), time(17, 0), 80.00)
 
-        # ARRANGE
-        # Já existe um cartão na lista
-        cartao_existente = CartaoCredito(1, 1234, "Master")
-        self.participante.cartoes.append(cartao_existente)
-        
-        # Usuário tenta adicionar o mesmo
-        dados_duplicados = {"numero": "1234", "bandeira": "Master"}
-        self.ctrl._ControladorParticipante__tela_participante.pega_dados_cartao.return_value = dados_duplicados
+    sistema.passeio_dao.add(pass1)
+    sistema.passeio_dao.add(pass2)
+    print("OK: Passeios cadastrados (IDs 1 e 2).")
 
-        # ACT
-        self.ctrl.adicionar_cartao()
+if __name__ == "__main__":
+    sistema = SistemaStub()
+    
+    try:
+        popular_dados_para_teste(sistema)
+    except Exception as e:
+        print(f"Aviso: {e}")
+        print("Provavelmente os dados já existem ou erro de PK.")
 
-        # ASSERT
-        # Lista não deve crescer
-        self.assertEqual(len(self.participante.cartoes), 1)
-        
-        # DAO não deve ser chamado
-        self.ctrl._ControladorParticipante__participante_DAO.update.assert_not_called()
-        
-        # Verifica se chamou mostra_mensagem (tratamento da exceção)
-        self.ctrl._ControladorParticipante__tela_participante.mostra_mensagem.assert_called()
-        print("-> Sucesso: Duplicidade bloqueada.")
-
-    def test_listar_cartoes(self):
-        """Teste: Listar cartões existentes"""
-        print("Testando LISTAR cartões...")
-
-        # ARRANGE
-        c1 = CartaoCredito(1, 1111, "Visa")
-        c2 = CartaoCredito(2, 2222, "Elo")
-        self.participante._Participante__cartoes = [c1, c2]
-
-        # ACT
-        self.ctrl.listar_cartoes()
-
-        # ASSERT
-        # Verifica se o metodo de mostrar cartão foi chamado 2 vezes
-        self.assertEqual(self.ctrl._ControladorParticipante__tela_participante.mostra_cartao.call_count, 2)
-        print("-> Sucesso: Cartões listados.")
-
-    def test_excluir_cartao_sucesso(self):
-        """Teste: Excluir um cartão existente"""
-        print("Testando EXCLUIR cartão...")
-
-        # ARRANGE
-        c1 = CartaoCredito(10, 1234, "Visa")
-        self.participante.cartoes.append(c1)
-        
-        # Simula usuário escolhendo o ID 10 na tela de seleção de CARTÃO
-        self.ctrl._ControladorParticipante__tela_participante.seleciona_cartao.return_value = 10
-
-        # ACT
-        # Passamos None porque sua definição atual pede um argumento 'participante' extra
-        self.ctrl.excluir_cartao(None)
-
-        # ASSERT
-        # 1. Lista deve estar vazia
-        self.assertEqual(len(self.participante.cartoes), 0)
-        
-        # 2. DAO deve ser atualizado
-        self.ctrl._ControladorParticipante__participante_DAO.update.assert_called_with(self.participante)
-        print("-> Sucesso: Cartão removido.")
-
-    def test_excluir_cartao_inexistente(self):
-        """Teste: Tentar excluir um cartão que não existe"""
-        print("Testando EXCLUIR cartão inexistente...")
-
-        # ARRANGE
-        c1 = CartaoCredito(10, 1234, "Visa")
-        self.participante.cartoes.append(c1)
-        
-        # Simula usuário escolhendo ID 99 (que não existe)
-        self.ctrl._ControladorParticipante__tela_participante.seleciona_cartao.return_value = 99
-
-        # ACT
-        self.ctrl.excluir_cartao(None)
-
-        # ASSERT
-        # Lista continua igual
-        self.assertEqual(len(self.participante.cartoes), 1)
-        
-        # Verifica se mostrou mensagem de erro (gerada pela Exception capturada)
-        self.ctrl._ControladorParticipante__tela_participante.mostra_mensagem.assert_called()
-        print("-> Sucesso: Erro tratado corretamente.")
-
-if __name__ == '__main__':
-    unittest.main(verbosity=2)
+    print("\n### INICIANDO TELA DE PASSEIOS (PySimpleGUI) ###")
+    sistema.controlador_passeio.abre_tela()

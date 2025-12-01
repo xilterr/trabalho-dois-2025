@@ -9,13 +9,13 @@ class PasseioDAO(DAO):
 
     def add(self, passeio: Passeio):
         if((passeio is not None) 
-           and isinstance(passeio, passeio) 
+           and isinstance(passeio, Passeio) 
            and isinstance(passeio.id, int)):
             super().add(passeio)
 
     def update(self, passeio: Passeio):
         if((passeio is not None) 
-           and isinstance(passeio, passeio) 
+           and isinstance(passeio, Passeio) 
            and isinstance(passeio.id, int)):
             super().update(passeio)
 

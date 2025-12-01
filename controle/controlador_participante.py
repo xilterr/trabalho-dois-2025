@@ -35,10 +35,19 @@ class ControladorParticipante:
         return max([c.id for c in participante.cartoes]) + 1
 
     def pega_participante_por_id(self):
-        self.listar_participantes()
-        id_selecionado = self.__tela_participante.seleciona_participante()
+        dados_lista = []
+        for p in self.__participante_DAO.get_all():
+            dados_lista.append({
+                "id": p.id,
+                "nome": p.nome,
+                "telefone": p.telefone,
+                "data_nascimento": p.data_nascimento,
+                "cpf_passaporte": p.cpf_passaporte
+            })
 
-        if not self.__participante_DAO.get_all():
+        id_selecionado = self.__tela_participante.seleciona_participante(dados_lista)
+
+        if id_selecionado is None:
             return None
 
         for participante in self.__participante_DAO.get_all():
@@ -81,21 +90,17 @@ class ControladorParticipante:
             self.__tela_participante.mostra_mensagem(f"ERRO: {e}")
 
     def listar_participantes(self):
-        if not self.__participante_DAO.get_all():
-            self.__tela_participante.mostra_mensagem("ATENÇÃO: Não há participantes cadastrados")
-            return
-        else:
-            self.__tela_participante.mostra_mensagem('-------- LISTAGEM DOS PARTICIPANTES ----------')
-
-            for participante in self.__participante_DAO.get_all():
-                dados_para_mostrar = {
-                    "id": participante.id,
-                    "nome": participante.nome,
-                    "telefone": participante.telefone,
-                    "data_nascimento": participante.data_nascimento,
-                    "cpf_passaporte": participante.cpf_passaporte,
-                }
-                self.__tela_participante.mostra_participante(dados_para_mostrar)
+        dados_lista = []
+        for p in self.__participante_DAO.get_all():
+            dados_lista.append({
+                "id": p.id,
+                "nome": p.nome,
+                "telefone": p.telefone,
+                "data_nascimento": p.data_nascimento,
+                "cpf_passaporte": p.cpf_passaporte
+            })
+            
+        self.__tela_participante.seleciona_participante(dados_lista)
 
     def alterar_participante(self):
         if not self.__participante_DAO.get_all():

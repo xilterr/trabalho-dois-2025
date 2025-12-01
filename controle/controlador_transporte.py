@@ -26,26 +26,30 @@ class ControladorTransporte:
 
     def pega_tipo_por_value(self):
         dados_tipos = []
-        valores_validos = []
         
         for tipo in TipoTransporte:
             dados_tipos.append({"value": tipo.value, "nome": tipo.name.capitalize()})
-            valores_validos.append(tipo.value)
 
-        self.__tela_transporte.mostra_tipos_transporte(dados_tipos)
-
-        valor_lido = self.__tela_transporte.le_num_inteiro_positivo(
-            "Digite o número correspondente ao tipo: ", 
-            valores_validos
-        )
+        valor_lido = self.__tela_transporte.mostra_tipos_transporte(dados_tipos)
+        
+        if valor_lido is None:
+            return None
 
         return TipoTransporte(valor_lido)
 
     def pega_transporte_por_id(self):
-        self.listar_transportes()    
-        id_selecionado = self.__tela_transporte.seleciona_transporte()
+        dados_lista = []
+        for t in self.__transporte_DAO.get_all():
+            dados_lista.append({
+                "id": t.id,
+                "nome": t.nome,
+                "tipo": t.tipo.name.capitalize(),
+                "empresa": t.empresa.nome
+            })
+        
+        id_selecionado = self.__tela_transporte.seleciona_transporte(dados_lista)
 
-        if not self.__transporte_DAO.get_all():
+        if id_selecionado is None:
             return None
 
         for transporte in self.__transporte_DAO.get_all():
@@ -61,6 +65,8 @@ class ControladorTransporte:
             return
 
         tipo_selecionado = self.pega_tipo_por_value()
+        if tipo_selecionado is None:
+            return
 
         dados_transporte = self.__tela_transporte.pega_dados_transporte()
         if dados_transporte is None:
@@ -85,20 +91,16 @@ class ControladorTransporte:
             self.__tela_transporte.mostra_mensagem(f"ERRO: {e}")
 
     def listar_transportes(self):
-        if not self.__transporte_DAO.get_all():
-            self.__tela_transporte.mostra_mensagem("ATENÇÃO: Não existem transportes cadastrados.")
-            return
-        else:
-            self.__tela_transporte.mostra_mensagem('-------- LISTAGEM DOS TRANSPORTES ----------')
-
-            for transporte in self.__transporte_DAO.get_all():
-                dados_para_mostrar = {
-                    "id": transporte.id,
-                    "nome": transporte.nome,
-                    "tipo": transporte.tipo.name.capitalize(), 
-                    "empresa": transporte.empresa.nome, 
-                }
-                self.__tela_transporte.mostra_transporte(dados_para_mostrar)
+        dados_lista = []
+        for t in self.__transporte_DAO.get_all():
+            dados_lista.append({
+                "id": t.id,
+                "nome": t.nome,
+                "tipo": t.tipo.name.capitalize(),
+                "empresa": t.empresa.nome
+            })
+            
+        self.__tela_transporte.seleciona_transporte(dados_lista)
 
     def alterar_transporte(self):
         if not self.__transporte_DAO.get_all():
@@ -125,7 +127,6 @@ class ControladorTransporte:
                     "tipo": transporte_selecionado.tipo.name.capitalize(),
                     "empresa": transporte_selecionado.empresa.nome
                     }
-                self.__tela_transporte.mostra_mensagem('Dados atualizados:')
                 self.__tela_transporte.mostra_transporte(dados_atualizados)
         except OpcaoInvalidaException as e:
             self.__tela_transporte.mostra_mensagem(f"ERRO: {e}")

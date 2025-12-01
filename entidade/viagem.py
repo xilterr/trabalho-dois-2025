@@ -1,8 +1,6 @@
-from datetime import date
-from typing import List
+from datetime import datetime, date
 from entidade.participante import Participante
 from entidade.trecho import Trecho
-from entidade.itinerario import Itinerario
 
 
 class Viagem:
@@ -11,17 +9,17 @@ class Viagem:
         self.__nome = nome
         self.__data_inicio = data_inicio
         self.__data_fim = data_fim
-        
-        self.__participantes: List[Participante] = []
-        self.__trechos: List[Trecho] = []
-        self.__itinerario: Itinerario = Itinerario()
+        self.__participantes = []
+        self.__cidades = []
+        self.__passeios = []
+        self.__trechos = []
 
     @property
-    def id(self) -> int:
+    def id(self):
         return self.__id
 
     @property
-    def nome(self) -> str:
+    def nome(self):
         return self.__nome
 
     @nome.setter
@@ -30,7 +28,7 @@ class Viagem:
             self.__nome = nome
 
     @property
-    def data_inicio(self) -> date:
+    def data_inicio(self):
         return self.__data_inicio
 
     @data_inicio.setter
@@ -39,7 +37,7 @@ class Viagem:
             self.__data_inicio = data
 
     @property
-    def data_fim(self) -> date:
+    def data_fim(self):
         return self.__data_fim
 
     @data_fim.setter
@@ -48,21 +46,17 @@ class Viagem:
             self.__data_fim = data
 
     @property
-    def participantes(self) -> List[Participante]:
-        return self.__participantes[:]
+    def participantes(self):
+        return self.__participantes
 
     @property
-    def trechos(self) -> List[Trecho]:
-        return self.__trechos[:]
+    def trechos(self):
+        return self.__trechos
 
     @property
-    def itinerario(self) -> Itinerario:
-        return self.__itinerario
+    def cidades(self):
+        return self.__cidades
 
-    def add_participante(self, participante: Participante):
-        if isinstance(participante, Participante):
-            self.__participantes.append(participante)
-
-    def add_trecho(self, trecho: Trecho):
-        if isinstance(trecho, Trecho):
-            self.__trechos.append(trecho)
+    @property
+    def passeios(self):
+        return self.__passeios

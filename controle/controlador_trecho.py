@@ -57,7 +57,6 @@ class ControladorTrecho:
             return
 
         if origem.id == destino.id:
-            #quero que tenha um raise OpcaoInvalidaException, todos erros precisam ser mostrados com exception
             self.__tela_trecho.mostra_mensagem("ERRO: Origem e destino não podem ser iguais.")
             return
 

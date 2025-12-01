@@ -5,6 +5,7 @@ from exception.dado_em_branco_exception import DadoEmBrancoException
 from exception.empresa_repetida_exception import EmpresaRepetidoException
 from DAO.empresa_dao import EmpresaDAO
 
+
 class ControladorEmpresa:
 
     def __init__(self, controlador_sistema):
@@ -22,10 +23,19 @@ class ControladorEmpresa:
         return maior_id
 
     def pega_empresa_por_id(self):
-        self.listar_empresas()
-        if not self.__empresa_DAO.get_all():
+        dados_lista = []
+        for e in self.__empresa_DAO.get_all():
+            dados_lista.append({
+                "id": e.id,
+                "nome": e.nome,
+                "cnpj": e.cnpj,
+                "telefone": e.telefone
+            })
+        
+        id_selecionado = self.__tela_empresa.seleciona_empresa(dados_lista)
+
+        if id_selecionado is None:
             return None
-        id_selecionado = self.__tela_empresa.seleciona_empresa()
 
         for empresa in self.__empresa_DAO.get_all():
             if empresa.id == id_selecionado:
@@ -65,21 +75,16 @@ class ControladorEmpresa:
             self.__tela_empresa.mostra_mensagem(f"ERRO: {e}")
 
     def listar_empresas(self):
-        if not self.__empresa_DAO.get_all():
-            self.__tela_empresa.mostra_mensagem("ATENÇÃO: Não existem empresas cadastradas.")
-            return
-
-        else:
-            self.__tela_empresa.mostra_mensagem('-------- LISTAGEM DAS EMPRESAS ----------')
-
-            for empresa in self.__empresa_DAO.get_all():
-                dados_para_mostrar = {
-                    "id": empresa.id,
-                    "nome": empresa.nome,
-                    "telefone": empresa.telefone,
-                    "cnpj": empresa.cnpj,
-                }
-                self.__tela_empresa.mostra_empresa(dados_para_mostrar)
+        dados_lista = []
+        for e in self.__empresa_DAO.get_all():
+            dados_lista.append({
+                "id": e.id,
+                "nome": e.nome,
+                "cnpj": e.cnpj,
+                "telefone": e.telefone
+            })
+            
+        self.__tela_empresa.seleciona_empresa(dados_lista)
 
     def alterar_empresa(self):
         if not self.__empresa_DAO.get_all():

@@ -1,21 +1,39 @@
-from limite.tela_abstract import TelaAbstract 
+import FreeSimpleGUI as sg
+from limite.tela_abstract import TelaAbstract
 
 
 class TelaSistema(TelaAbstract):
 
-    def tela_opcoes(self) -> str:
-        print("\n" + "=" * 30)
-        print("SISTEMA DE GERENCIAMENTO DE VIAGENS".center(30))
-        print("=" * 30)
-        print("[1] - Gerenciar Participantes")
-        print("[2] - Gerenciar Empresas")
-        print("[3] - Gerenciar Transportes")
-        print("[4] - Gerenciar Países")
-        print("[5] - Gerenciar Cidades")
-        print("[6] - Gerenciar Passeios")
-        print("[0] - Sair do Sistema")
-        print("=" * 30) 
+    def __init__(self):
+        super().__init__()
 
-        opcao = self.le_num_inteiro_positivo("Escolha a opção: ", [1, 2, 3, 4, 5, 6, 0])
+    def tela_opcoes(self) -> int:
+        layout_botoes = [
+            [sg.Button("Gerenciar Participantes", key=1, size=(40, 2), font=self.fonte_padrao)],
+            [sg.Button("Gerenciar Empresas", key=2, size=(40, 2), font=self.fonte_padrao)],
+            [sg.Button("Gerenciar Transportes", key=3, size=(40, 2), font=self.fonte_padrao)],
+            [sg.Button("Gerenciar Países", key=4, size=(40, 2), font=self.fonte_padrao)],
+            [sg.Button("Gerenciar Cidades", key=5, size=(40, 2), font=self.fonte_padrao)],
+            [sg.Button("Gerenciar Passeios", key=6, size=(40, 2), font=self.fonte_padrao)],
+            [sg.Button("Gerenciar Viagens", key=7, size=(40, 2), font=self.fonte_padrao)] 
+        ]
 
-        return opcao
+        layout = [
+            [sg.Text("SISTEMA DE GERENCIAMENTO DE VIAGENS", font=self.fonte_titulo, justification='center', expand_x=True, pad=((0,0), (20, 40)))],
+            
+            [sg.Column(layout_botoes, justification='center', element_justification='center')],
+            
+            [sg.VPush()],
+            
+            [sg.Button("Fechar", key=0, size=(20, 1), button_color=('white', '#B22222'), font=self.fonte_padrao), sg.Push()]
+        ]
+
+        window = sg.Window('Menu Principal', layout, size=self.tamanho_janela, element_justification='center')
+
+        button, values = window.read()
+        window.close()
+
+        if button is None or button == 0:
+            return 0
+        
+        return button

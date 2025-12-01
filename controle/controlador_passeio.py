@@ -1,6 +1,4 @@
 from entidade.passeio import Passeio
-from entidade.cidade import Cidade
-from entidade.pais import Pais
 from limite.tela_passeio import TelaPasseio
 from exception.opcao_invalida_exception import OpcaoInvalidaException
 from exception.dado_em_branco_exception import DadoEmBrancoException
@@ -11,12 +9,19 @@ from controle.controlador_participante import ControladorParticipante
 
 class ControladorPasseio:
 
-    def __init__(self, controlador_sistema, controlador_cidade: ControladorCidade, controlador_participante: ControladorParticipante):
+    def __init__(self, controlador_sistema,
+                 controlador_cidade: ControladorCidade,
+                 controlador_participante: ControladorParticipante
+                 ):
         self.__tela_passeio = TelaPasseio()
         self.__controlador_sistema = controlador_sistema
         self.__controlador_cidade = controlador_cidade
         self.__controlador_participante = controlador_participante
         self.__passeio_DAO = PasseioDAO()
+
+    @property
+    def tela_passeio(self):
+        return self.__tela_passeio
 
     def gera_id(self):
         lista_passeios = self.__passeio_DAO.get_all()
@@ -28,10 +33,20 @@ class ControladorPasseio:
         return maior_id
 
     def pega_passeio_por_id(self):
-        self.listar_passeios()
-        id_selecionado = self.__tela_passeio.seleciona_passeio()
+        dados_lista = []
+        for p in self.__passeio_DAO.get_all():
+            dados_lista.append({
+                "id": p.id,
+                "atracao": p.atracao,
+                "cidade": p.cidade.nome,
+                "horario_inicio": p.horario_inicio,
+                "horario_fim": p.horario_fim,
+                "valor": p.valor
+            })
 
-        if not self.__passeio_DAO.get_all():
+        id_selecionado = self.__tela_passeio.seleciona_passeio(dados_lista)
+
+        if id_selecionado is None:
             return None
 
         for passeio in self.__passeio_DAO.get_all():
@@ -43,11 +58,12 @@ class ControladorPasseio:
 
     def incluir_passeio(self):
         dados_passeio = self.__tela_passeio.pega_dados_passeio()
+        
+        if dados_passeio is None:
+            return
 
         cidade = self.__controlador_cidade.pega_cidade_por_id()
-        pais = cidade.pais.nome
-
-        if dados_passeio is None:
+        if cidade is None:
             return
 
         try:
@@ -74,23 +90,18 @@ class ControladorPasseio:
             self.__tela_passeio.mostra_mensagem(f"ERRO: {e}")
 
     def listar_passeios(self):
-        if not self.__passeio_DAO.get_all():
-            self.__tela_passeio.mostra_mensagem("ATENÇÃO: Não há passeios cadastrados")
-            return
-        else:
-            self.__tela_passeio.mostra_mensagem('-------- LISTAGEM DOS PASSEIOS ----------')
-
-            for passeio in self.__passeio_DAO.get_all():
-                dados_para_mostrar = {
-                    "id": passeio.id,
-                    "atracao": passeio.atracao,
-                    "cidade": passeio.cidade.nome,
-                    "pais": passeio.cidade.pais.nome,
-                    "horario_inicio": passeio.horario_inicio,
-                    "horario_fim": passeio.horario_fim,
-                    "valor": passeio.valor,
-                }
-                self.__tela_passeio.mostra_passeio(dados_para_mostrar)
+        dados_lista = []
+        for p in self.__passeio_DAO.get_all():
+            dados_lista.append({
+                "id": p.id,
+                "atracao": p.atracao,
+                "cidade": p.cidade.nome,
+                "horario_inicio": p.horario_inicio,
+                "horario_fim": p.horario_fim,
+                "valor": p.valor
+            })
+        
+        self.__tela_passeio.seleciona_passeio(dados_lista)
 
     def alterar_passeio(self):
         if not self.__passeio_DAO.get_all():
@@ -171,9 +182,22 @@ class ControladorPasseio:
             self.__tela_passeio.mostra_mensagem(f"ERRO ao salvar: {e}")
 
     def remover_participante(self):
-        passeio_selecionado = self.listar_participantes()
+        passeio_selecionado = self.pega_passeio_por_id()
+        if not passeio_selecionado:
+            return
 
-        id_participante = self.__tela_passeio.le_num_inteiro_positivo("Digite o ID do participante que deseja remover: ")
+        if not passeio_selecionado.participantes:
+             self.__tela_passeio.mostra_mensagem("ERRO: Não há participantes cadastrados neste passeio.")
+             return
+
+        dados_lista = []
+        for p in passeio_selecionado.participantes:
+             dados_lista.append({
+                "id": p.id, "nome": p.nome, "telefone": p.telefone, 
+                "data_nascimento": p.data_nascimento, "cpf_passaporte": p.cpf_passaporte
+            })
+        
+        id_participante = self.__controlador_participante.tela_participante.seleciona_participante(dados_lista)
 
         participante_para_remover = None
         for p in passeio_selecionado.participantes:
@@ -189,7 +213,8 @@ class ControladorPasseio:
             except Exception as e:
                 self.__tela_passeio.mostra_mensagem(f"ERRO ao salvar: {e}")
         else:
-            self.__tela_passeio.mostra_mensagem("ERRO: Participante com este ID não está na lista deste passeio.")
+            # Se cancelou ou não achou
+            pass
 
     def listar_participantes(self):
         if not self.__passeio_DAO.get_all():
@@ -204,17 +229,17 @@ class ControladorPasseio:
             self.__tela_passeio.mostra_mensagem("ERRO: Não há participantes cadastrados neste passeio.")
             return
 
+        dados_lista = []
         for participante in passeio_selecionado.participantes:
-            dados_para_mostrar = {
+            dados_lista.append({
                 "id": participante.id,
                 "nome": participante.nome,
                 "telefone": participante.telefone,
                 "data_nascimento": participante.data_nascimento,
                 "cpf_passaporte": participante.cpf_passaporte,
-            }
+            })
 
-        self.__controlador_participante.tela_participante.mostra_participante(dados_para_mostrar)
-
+        self.__controlador_participante.tela_participante.seleciona_participante(dados_lista)
         return passeio_selecionado
 
     def retornar(self):
@@ -224,7 +249,8 @@ class ControladorPasseio:
         lista_opcoes = {1: self.incluir_passeio,
                         2: self.listar_passeios,
                         3: self.alterar_passeio,
-                        4: self.excluir_passeio
+                        4: self.excluir_passeio,
+                        0: self.retornar
                         }
 
         while True:

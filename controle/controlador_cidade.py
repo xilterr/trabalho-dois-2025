@@ -26,10 +26,17 @@ class ControladorCidade:
         return maior_id
 
     def pega_cidade_por_id(self):
-        self.listar_cidade()
-        id_selecionado = self.__tela_cidade.seleciona_cidade()
+        dados_lista = []
+        for c in self.__cidade_DAO.get_all():
+            dados_lista.append({
+                "id": c.id,
+                "nome": c.nome,
+                "pais_nome": c.pais.nome
+            })
+        
+        id_selecionado = self.__tela_cidade.seleciona_cidade(dados_lista)
 
-        if not self.__cidade_DAO.get_all():
+        if id_selecionado is None:
             return None
 
         for cidade in self.__cidade_DAO.get_all():
@@ -70,19 +77,15 @@ class ControladorCidade:
             self.__tela_cidade.mostra_mensagem(f"ERRO: {e}")
 
     def listar_cidade(self):
-        if not self.__cidade_DAO.get_all():
-            self.__tela_cidade.mostra_mensagem("ATENÇÃO: Não há cidade cadastrada")
-            return
-        else:
-            self.__tela_cidade.mostra_mensagem('-------- LISTAGEM DAS CIDADES ----------')
-
-            for cidade in self.__cidade_DAO.get_all():
-                dados_para_mostrar = {
-                    "id": cidade.id,
-                    "nome": cidade.nome,
-                    "pais_nome": cidade.pais.nome
-                    }
-                self.__tela_cidade.mostra_cidade(dados_para_mostrar)
+        dados_lista = []
+        for c in self.__cidade_DAO.get_all():
+            dados_lista.append({
+                "id": c.id,
+                "nome": c.nome,
+                "pais_nome": c.pais.nome
+            })
+            
+        self.__tela_cidade.seleciona_cidade(dados_lista)
 
     def alterar_cidade(self):
         if not self.__cidade_DAO.get_all():

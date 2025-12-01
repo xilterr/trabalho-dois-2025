@@ -19,11 +19,11 @@ class ControladorSistema:
         self.__controlador_transporte = ControladorTransporte(self, self.__controlador_empresa)
         self.__controlador_pais = ControladorPais(self)
         self.__controlador_cidade = ControladorCidade(self, self.__controlador_pais)
-        self.__controlador_passeio = ControladorPasseio(self, self.__controlador_cidade)
-        self.__controlador_viagem = ControladorViagem(self,
-                                                      self.__controlador_participante,
-                                                      self.__controlador_passeio
-                                                      )
+        self.__controlador_passeio = ControladorPasseio(self,
+                                                        self.__controlador_cidade,
+                                                        self.__controlador_participante
+                                                        )
+        self.__controlador_viagem = ControladorViagem(self)
 
     @property
     def tela_sistema(self):
@@ -44,6 +44,10 @@ class ControladorSistema:
     @property
     def controlador_pais(self):
         return self.__controlador_pais
+    
+    @property
+    def controlador_cidade(self):
+        return self.__controlador_cidade
 
     @property
     def controlador_passeio(self):
@@ -73,6 +77,9 @@ class ControladorSistema:
 
     def cadastra_passeios(self):
         self.__controlador_passeio.abre_tela()
+        
+    def cadastra_viagens(self):
+        self.__controlador_viagem.abre_tela()
 
     def encerra_sistema(self):
         exit(0)
@@ -84,6 +91,7 @@ class ControladorSistema:
                         4: self.cadastra_paises,
                         5: self.cadastra_cidades,
                         6: self.cadastra_passeios,
+                        7: self.cadastra_viagens,
                         0: self.encerra_sistema
                         }
 
@@ -91,17 +99,11 @@ class ControladorSistema:
             try:
                 opcao_escolhida = self.__tela_sistema.tela_opcoes()
                 if opcao_escolhida is None:
-                    raise DadoEmBrancoException()
-
-                if opcao_escolhida == 0:
                     self.encerra_sistema()
-                    break
-                
                 funcao_escolhida = lista_opcoes.get(opcao_escolhida)
                 if funcao_escolhida:
                     funcao_escolhida()
                 else:
                     raise OpcaoInvalidaException()
-
-            except OpcaoInvalidaException or DadoEmBrancoException as e:
-                self.__tela_sistema.mostra_mensagem(f"\nERRO: {e}")
+            except (OpcaoInvalidaException, DadoEmBrancoException, Exception) as e:
+                self.__tela_sistema.mostra_mensagem(f"ERRO: {e}")
